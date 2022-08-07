@@ -8,12 +8,12 @@ SECRET_KEY = 'django-insecure-v1c_aza%(hsh^dfbwefuihg42fh4**&Joiddducq#(a7h!90#e
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["127.0.0.1", "194.58.111.146"]
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'tgbot_ew',
+        'NAME': 'tgbot',
         'USER': 'romancvc',
         'PASSWORD': '21761815',
         'HOST': 'localhost',

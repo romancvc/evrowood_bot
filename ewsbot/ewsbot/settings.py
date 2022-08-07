@@ -114,4 +114,4 @@ DEFAULT_FILE_STORAGE = 'django_hashedfilenamestorage.storage.HashedFilenameFileS
 try:
     from .local_settings import *
 except ImportError:
-    from prod_settings import *
+    from .prod_settings import *
