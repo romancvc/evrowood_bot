@@ -14,7 +14,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'tgbot',
-        'USER': 'romancvc',
+        'USER': 'userdb',
         'PASSWORD': '21761815',
         'HOST': 'localhost',
         'PORT': '5432'
