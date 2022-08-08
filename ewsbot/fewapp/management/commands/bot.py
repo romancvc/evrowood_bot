@@ -10,7 +10,6 @@ import re
 
 from fewapp.models import *
 
-
 ENTER_KEY, AUTHORIZATION, NEW_OUTLET, NAME_OUTLET, METRO, ADDRESS_OUTLET, NUMBER_POINT, STAND, PHOTO_STAND, ACTIVE_LED, STAND_COL, HANDOUT, MARK, COMPETITORS, ADD_COMPETITORS, CONTACTS_NAME, CONTACTS_PHONE, CONTACTS_EMAIL = range(18)
 
 
@@ -477,15 +476,21 @@ def contacts_name(update: Update, context: CallbackContext):
 def contacts_phone(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
+    if len(text) > 12:
+        reply_text = f'Неккоректный номер телефона. Попробуйте еще раз'
+        update.message.reply_text(
+            text=reply_text,
+        )
+        return CONTACTS_PHONE
+    else:
+        PointSales.objects.filter(point_name=point_name).update(contacts_point_phone=text)
 
-    PointSales.objects.filter(point_name=point_name).update(contacts_point_phone=text)
-
-    reply_text = f'Укажите элекстронную почту. Если ее нет - нажмите кнопку:'
-    update.message.reply_text(
-        text=reply_text,
-        reply_markup=reply_dont_email
-    )
-    return CONTACTS_EMAIL
+        reply_text = f'Укажите элекстронную почту. Если ее нет - нажмите кнопку:'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_dont_email
+        )
+        return CONTACTS_EMAIL
 
 
 @log_errors
@@ -500,6 +505,11 @@ def contacts_email(update: Update, context: CallbackContext):
         )
         update.message.reply_text(
             text=reply_text,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        reply_text2 = f'Введите /start чтобы вернуться в начало'
+        update.message.reply_text(
+            text=reply_text2,
         )
         return ConversationHandler.END
     else:
@@ -510,6 +520,11 @@ def contacts_email(update: Update, context: CallbackContext):
         )
         update.message.reply_text(
             text=reply_text,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        reply_text2 = f'Введите /start чтобы вернуться в начало'
+        update.message.reply_text(
+            text=reply_text2,
         )
         return ConversationHandler.END
 

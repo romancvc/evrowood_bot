@@ -107,7 +107,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Настройки бота
 
-TOKEN = '5427011023:AAEGidtJ9JRTNWAc7FQ-gjVje6ipYjfFO_s'
+TOKEN = '5336690480:AAEPaSt7dw52AWsm1a-Bch6Wm_lKojU9LcU'
 
 DEFAULT_FILE_STORAGE = 'django_hashedfilenamestorage.storage.HashedFilenameFileSystemStorage'
 
