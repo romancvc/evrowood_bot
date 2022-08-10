@@ -12,12 +12,9 @@ import phonenumbers
 
 from fewapp.models import *
 
-ENTER_KEY, AUTHORIZATION, NEW_OUTLET, NAME_OUTLET, METRO, ADDRESS_OUTLET, NUMBER_POINT, STAND, PHOTO_STAND, ACTIVE_LED, STAND_COL, HANDOUT, MARK, COMPETITORS, ADD_COMPETITORS, CONTACTS_NAME, CONTACTS_PHONE, CONTACTS_EMAIL = range(18)
-
+ENTER_KEY, AUTHORIZATION, NEW_OUTLET, NAME_OUTLET, METRO, ADDRESS_OUTLET, NUMBER_POINT, STAND, POSS_STAND, PHOTO_STAND, ACTIVE_LED, STAND_COL, HANDOUT, MARK, COMPETITORS, ADD_COMPETITORS, CONTACTS_NAME, CONTACTS_PHONE, CONTACTS_EMAIL = range(19)
 
 point_name = str()
-
-
 
 compretitors_list = []
 
@@ -49,7 +46,7 @@ def start_handler(update: Update, context: CallbackContext):
     )
 
     if str(chat_id) in now_user:
-        reply_text = f'С возвращением! Чем сегодня займемся?'
+        reply_text = f'Нажмите кнопку ниже, чтобы добавить новую торговую точку:'
         update.message.reply_text(
             text=reply_text,
             reply_markup=reply_new_point,
@@ -157,7 +154,7 @@ def metro(update: Update, context: CallbackContext):
 
     PointSales.objects.filter(point_name=point_name).update(metro=text)
 
-    reply_text = f'Введите полный адрес торговой точки:\n Например: 874653, Москва, ул. Остоженко, 60'
+    reply_text = f'Введите полный адрес торговой точки:\n Например: Москва, ул. Остоженко, 60'
     update.message.reply_text(
         text=reply_text,
     )
@@ -214,14 +211,37 @@ def stand(update: Update, context: CallbackContext):
             reply_markup=ReplyKeyboardRemove(),
         )
         return PHOTO_STAND
+
     elif text == thereisno_stand:
+        reply_text = f'Есть ли возможность установки стенда для EVROWOOD на торговой точке?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return POSS_STAND
+
+
+def poss_stand(update: Update, context: CallbackContext):
+    text = update.message.text
+    chat_id = update.message.chat_id
+
+    PointSales.objects.filter(point_name=point_name).update(poss_stand=text)
+
+    if text == yes:
+        reply_text = f'Есть ли возможность установки стенда-колонны?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return STAND_COL
+
+    elif text == no:
         reply_text = f'Оцените точку от 1 до 10:'
         update.message.reply_text(
             text=reply_text,
             reply_markup=reply_marks,
         )
         return MARK
-
 
 @log_errors
 def photo_stand(update: Update, context: CallbackContext):
@@ -247,20 +267,6 @@ def active_led(update: Update, context: CallbackContext):
 
     PointSales.objects.filter(point_name=point_name).update(active_led=text)
 
-    reply_text = f'Есть ли возможность установки стенда-колонны?'
-    update.message.reply_text(
-        text=reply_text,
-        reply_markup=reply_yes_no,
-    )
-    return STAND_COL
-
-
-@log_errors
-def ctand_col(update: Update, context: CallbackContext):
-    text = update.message.text
-    chat_id = update.message.chat_id
-
-    PointSales.objects.filter(point_name=point_name).update(stand_column=text)
 
     reply_text = f'Есть ли раздаточный материал на торговой точке?'
     update.message.reply_text(
@@ -276,6 +282,21 @@ def handout(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
 
     PointSales.objects.filter(point_name=point_name).update(handout=text)
+
+    reply_text = f'Есть ли возможность установки стенда-колонны?'
+    update.message.reply_text(
+        text=reply_text,
+        reply_markup=reply_yes_no,
+    )
+    return STAND_COL
+
+
+@log_errors
+def stand_col(update: Update, context: CallbackContext):
+    text = update.message.text
+    chat_id = update.message.chat_id
+
+    PointSales.objects.filter(point_name=point_name).update(stand_column=text)
 
     reply_text = f'Оцените точку от 1 до 10:'
     update.message.reply_text(
@@ -472,6 +493,9 @@ class Command(BaseCommand):
                 STAND: [
                     MessageHandler(Filters.all & (~ Filters.command), stand, pass_user_data=True)
                 ],
+                POSS_STAND: [
+                        MessageHandler(Filters.all & (~ Filters.command), poss_stand, pass_user_data=True)
+                ],
                 PHOTO_STAND: [
                     MessageHandler(Filters.all & (~ Filters.command), photo_stand, pass_user_data=True)
                 ],
@@ -479,7 +503,7 @@ class Command(BaseCommand):
                     MessageHandler(Filters.all & (~ Filters.command), active_led, pass_user_data=True)
                 ],
                 STAND_COL: [
-                    MessageHandler(Filters.all & (~ Filters.command), ctand_col, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), stand_col, pass_user_data=True)
                 ],
                 HANDOUT: [
                     MessageHandler(Filters.all & (~ Filters.command), handout, pass_user_data=True)

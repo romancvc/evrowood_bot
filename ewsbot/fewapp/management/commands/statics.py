@@ -8,7 +8,7 @@ no = 'Нет'
 thereis_stand = 'Есть стенд'
 thereisno_stand = 'Нет стенда'
 add_competitor = 'Добавить конкурента'
-no_competitor = 'Продают только нас'
+no_competitor = 'Нет конкурентов'
 exit_competitor = 'Больше конкурентов нет'
 dont_email = 'Нет эл. почты'
 

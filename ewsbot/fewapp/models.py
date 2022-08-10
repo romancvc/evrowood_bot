@@ -71,6 +71,7 @@ class PointSales(models.Model):
     point_number = models.CharField('Номер ТТ на рынке', max_length=20, null=True)
     point_photo = models.CharField('Фото стенда', max_length=100, null=True)
     active_led = models.CharField('Горит ли LED', max_length=5, null=True)
+    poss_stand = models.CharField('Возможность установки стенда для EVROWOOD', max_length=5, null=True)
     stand_column = models.CharField('Стенд-колонна', max_length=5, null=True)
     handout = models.CharField('Раздаточный материал', max_length=5, null=True)
     mark_point = models.IntegerField('Оценка ТТ', null=True)
