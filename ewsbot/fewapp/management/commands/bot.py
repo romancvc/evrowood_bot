@@ -8,7 +8,6 @@ import random
 import datetime
 import re
 from .statics import *
-import phonenumbers
 
 from fewapp.models import *
 
