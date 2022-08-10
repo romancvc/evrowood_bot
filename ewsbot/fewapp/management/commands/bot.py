@@ -7,110 +7,17 @@ from telegram import *
 import random
 import datetime
 import re
+from .statics import *
+import phonenumbers
 
 from fewapp.models import *
 
 ENTER_KEY, AUTHORIZATION, NEW_OUTLET, NAME_OUTLET, METRO, ADDRESS_OUTLET, NUMBER_POINT, STAND, PHOTO_STAND, ACTIVE_LED, STAND_COL, HANDOUT, MARK, COMPETITORS, ADD_COMPETITORS, CONTACTS_NAME, CONTACTS_PHONE, CONTACTS_EMAIL = range(18)
 
 
-authen = 'Начать авторизацию'
-new_point = 'Добавить новую точку'
-dont_market = 'Это магазин, а не рынок'
-yes = 'Да'
-no = 'Нет'
-thereis_stand = 'Есть стенд'
-thereisno_stand = 'Нет стенда'
-add_competitor = 'Добавить конкурента'
-no_competitor = 'Продают только нас'
-exit_competitor = 'Больше конкурентов нет'
-dont_email = 'Нет эл. почты'
-
 point_name = str()
 
-CALLBACK_BUTTON1_YES = "callbak_button1_yes"
-CALLBACK_BUTTON1_NO = "callbak_button1_no"
 
-TITLE = {
-    CALLBACK_BUTTON1_YES: "Да",
-    CALLBACK_BUTTON1_NO: "Нет"
-}
-
-reply_yes_no = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=yes),
-            KeyboardButton(text=no),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_stand = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=thereis_stand),
-            KeyboardButton(text=thereisno_stand),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_dont_market = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=dont_market),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_dont_email = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=dont_email),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_marks = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text='1'),
-            KeyboardButton(text='2'),
-            KeyboardButton(text='3'),
-            KeyboardButton(text='4'),
-            KeyboardButton(text='5'),
-        ],
-        [
-            KeyboardButton(text='6'),
-            KeyboardButton(text='7'),
-            KeyboardButton(text='8'),
-            KeyboardButton(text='9'),
-            KeyboardButton(text='10'),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_competitor_start = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=no_competitor),
-        ],
-    ],
-    resize_keyboard=True,
-)
-
-reply_competitor_in = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=add_competitor),
-            KeyboardButton(text=exit_competitor),
-        ],
-    ],
-    resize_keyboard=True,
-)
 
 compretitors_list = []
 
@@ -125,8 +32,6 @@ def log_errors(f):
             raise e
 
     return inner
-
-
 
 
 @log_errors
@@ -144,37 +49,18 @@ def start_handler(update: Update, context: CallbackContext):
     )
 
     if str(chat_id) in now_user:
-
-        reply_markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text=new_point)
-                ],
-            ],
-            resize_keyboard=True,
-        )
-
         reply_text = f'С возвращением! Чем сегодня займемся?'
         update.message.reply_text(
             text=reply_text,
-            reply_markup=reply_markup,
+            reply_markup=reply_new_point,
         )
         return NEW_OUTLET
 
     else:
-        reply_markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text=authen)
-                ],
-            ],
-            resize_keyboard=True,
-        )
-
         reply_text = f'Привет! Нажми кнопку ниже, чтобы авторизироваться'
         update.message.reply_text(
             text=reply_text,
-            reply_markup=reply_markup,
+            reply_markup=reply_authen,
         )
         return ENTER_KEY
 
@@ -198,7 +84,7 @@ def enter_key(update: Update, context: CallbackContext):
 def authorization(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
-    result = User.objects.values_list("key_auto", flat=True).filter(user_id=0)
+    result = User.objects.values_list("key_auto", flat=True)
 
     if text in result:
         p = User.objects.filter(key_auto=text).update(
@@ -206,19 +92,10 @@ def authorization(update: Update, context: CallbackContext):
                         user_id=chat_id
                  )
 
-        reply_murkup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text=new_point)
-                ],
-            ],
-            resize_keyboard=True,
-        )
-
         reply_text = 'Авторизация прошла успешно. Нажмите кнопку ниже, чтобы добавить новую торговую точку'
         update.message.reply_text(
             text=reply_text,
-            reply_markup=reply_murkup,
+            reply_markup=reply_new_point,
         )
         return NEW_OUTLET
 
@@ -229,6 +106,18 @@ def authorization(update: Update, context: CallbackContext):
             reply_markup=ReplyKeyboardRemove(),
         )
         return AUTHORIZATION
+
+@log_errors
+def exit_bot(update: Update, context: CallbackContext):
+    text = update.message.text
+    chat_id = update.message.chat_id
+
+    reply_text = f'Вы вышли из диалога. Введите /start чтобы перезапустить бота.'
+    update.message.reply_text(
+        text=reply_text,
+        reply_markup=reply_new_point,
+    )
+    return ConversationHandler.END
 
 
 @log_errors
@@ -242,7 +131,6 @@ def new_outlet(update: Update, context: CallbackContext):
         reply_markup=ReplyKeyboardRemove(),
     )
     return NAME_OUTLET
-
 
 
 @log_errors
@@ -476,8 +364,9 @@ def contacts_name(update: Update, context: CallbackContext):
 def contacts_phone(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
-    if len(text) > 12:
-        reply_text = f'Неккоректный номер телефона. Попробуйте еще раз'
+
+    if not re.match(r"(^[+0-9]{1,3})*([0-9]{10,11}$)", text):
+        reply_text = f'Неправильно набран номер. Попробуйте еще раз:'
         update.message.reply_text(
             text=reply_text,
         )
@@ -485,7 +374,7 @@ def contacts_phone(update: Update, context: CallbackContext):
     else:
         PointSales.objects.filter(point_name=point_name).update(contacts_point_phone=text)
 
-        reply_text = f'Укажите элекстронную почту. Если ее нет - нажмите кнопку:'
+        reply_text = f'Укажите электронную почту. Если ее нет - нажмите кнопку:'
         update.message.reply_text(
             text=reply_text,
             reply_markup=reply_dont_email
@@ -512,6 +401,12 @@ def contacts_email(update: Update, context: CallbackContext):
             text=reply_text2,
         )
         return ConversationHandler.END
+    elif not re.match(r"[^@]+@[^@]+\.[^@]+", text):
+        reply_text = f'Вы точно ввели электронный адрес? Попробуйте еще раз'
+        update.message.reply_text(
+            text=reply_text,
+        )
+        return CONTACTS_EMAIL
     else:
         PointSales.objects.filter(point_name=point_name).update(contacts_point_email=text)
         reply_text = f'Спасибо!\nПлюсик в твою копилочку😉'
@@ -554,63 +449,66 @@ class Command(BaseCommand):
             ],
             states={
                 ENTER_KEY: [
-                    MessageHandler(Filters.all, enter_key, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), enter_key, pass_user_data=True)
                 ],
                 AUTHORIZATION: [
-                    MessageHandler(Filters.all, authorization, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), authorization, pass_user_data=True)
                 ],
                 NEW_OUTLET: [
-                    MessageHandler(Filters.all, new_outlet, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), new_outlet, pass_user_data=True)
                 ],
                 NAME_OUTLET: [
-                    MessageHandler(Filters.all, name_outlet, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), name_outlet, pass_user_data=True)
                 ],
                 METRO: [
-                    MessageHandler(Filters.all, metro, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), metro, pass_user_data=True)
                 ],
                 ADDRESS_OUTLET: [
-                    MessageHandler(Filters.all, address_outlet, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), address_outlet, pass_user_data=True)
                 ],
                 NUMBER_POINT: [
-                    MessageHandler(Filters.all, number_point, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), number_point, pass_user_data=True)
                 ],
                 STAND: [
-                    MessageHandler(Filters.all, stand, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), stand, pass_user_data=True)
                 ],
                 PHOTO_STAND: [
-                    MessageHandler(Filters.all, photo_stand, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), photo_stand, pass_user_data=True)
                 ],
                 ACTIVE_LED: [
-                    MessageHandler(Filters.all, active_led, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), active_led, pass_user_data=True)
                 ],
                 STAND_COL: [
-                    MessageHandler(Filters.all, ctand_col, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), ctand_col, pass_user_data=True)
                 ],
                 HANDOUT: [
-                    MessageHandler(Filters.all, handout, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), handout, pass_user_data=True)
                 ],
                 MARK: [
-                    MessageHandler(Filters.all, mark, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), mark, pass_user_data=True)
                 ],
                 ADD_COMPETITORS: [
-                    MessageHandler(Filters.all, add_competitors, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), add_competitors, pass_user_data=True)
                 ],
                 COMPETITORS: [
-                    MessageHandler(Filters.all, competitors, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), competitors, pass_user_data=True)
                 ],
                 CONTACTS_NAME: [
-                    MessageHandler(Filters.all, contacts_name, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), contacts_name, pass_user_data=True)
                 ],
                 CONTACTS_PHONE: [
-                    MessageHandler(Filters.all, contacts_phone, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), contacts_phone, pass_user_data=True)
                 ],
                 CONTACTS_EMAIL: [
-                    MessageHandler(Filters.all, contacts_email, pass_user_data=True)
+                    MessageHandler(Filters.all & (~ Filters.command), contacts_email, pass_user_data=True)
                 ],
             },
-            fallbacks=[],
+            fallbacks=[
+                CommandHandler("exit", exit_bot)
+            ],
         )
         updater.dispatcher.add_handler(conv_handler)
+        updater.dispatcher.add_handler(CommandHandler('exit', exit_bot))
 
         updater.start_polling()
         updater.idle()
