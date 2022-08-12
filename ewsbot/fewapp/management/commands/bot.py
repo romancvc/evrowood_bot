@@ -53,7 +53,11 @@ def start_handler(update: Update, context: CallbackContext):
         return NEW_OUTLET
 
     else:
-        reply_text = f'Привет! Нажми кнопку ниже, чтобы авторизироваться'
+        reply_text = f'Добро пожаловать! Посмотри видеоурок о том, как пользоваться ботом - https://youtu.be/z9BXM-7beTk'
+        update.message.reply_text(
+            text=reply_text,
+        )
+        reply_text = f'После просмотра нажми кнопку ниже, чтобы авторизироваться'
         update.message.reply_text(
             text=reply_text,
             reply_markup=reply_authen,
@@ -69,6 +73,8 @@ def enter_key(update: Update, context: CallbackContext):
 
     if text == authen:
         reply_text = 'Введите полученный ключ авторизции'
+
+
         update.message.reply_text(
             text=reply_text,
             reply_markup=ReplyKeyboardRemove(),
@@ -111,7 +117,6 @@ def exit_bot(update: Update, context: CallbackContext):
     reply_text = f'Вы вышли из диалога. Введите /start чтобы перезапустить бота.'
     update.message.reply_text(
         text=reply_text,
-        reply_markup=reply_new_point,
     )
     return ConversationHandler.END
 
@@ -131,7 +136,7 @@ def new_outlet(update: Update, context: CallbackContext):
 
 @log_errors
 def name_outlet(update: Update, context: CallbackContext):
-    text = update.message.text
+    text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s]", "", update.message.text)
     chat_id = update.message.chat_id
 
     global point_name
@@ -148,7 +153,7 @@ def name_outlet(update: Update, context: CallbackContext):
 
 @log_errors
 def metro(update: Update, context: CallbackContext):
-    text = update.message.text
+    text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s]", "", update.message.text)
     chat_id = update.message.chat_id
 
     PointSales.objects.filter(point_name=point_name).update(metro=text)
@@ -204,6 +209,7 @@ def stand(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
 
     if text == thereis_stand:
+        PointSales.objects.filter(point_name=point_name).update(available='1')
         reply_text = f'Пришлите фотографию стенда EVROWOOD:'
         update.message.reply_text(
             text=reply_text,
@@ -212,6 +218,7 @@ def stand(update: Update, context: CallbackContext):
         return PHOTO_STAND
 
     elif text == thereisno_stand:
+        PointSales.objects.filter(point_name=point_name).update(available='0')
         reply_text = f'Есть ли возможность установки стенда для EVROWOOD на торговой точке?'
         update.message.reply_text(
             text=reply_text,
@@ -224,9 +231,10 @@ def poss_stand(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
 
-    PointSales.objects.filter(point_name=point_name).update(poss_stand=text)
+    #PointSales.objects.filter(point_name=point_name).update(poss_stand=text)
 
     if text == yes:
+        PointSales.objects.filter(point_name=point_name).update(poss_stand='1')
         reply_text = f'Есть ли возможность установки стенда-колонны?'
         update.message.reply_text(
             text=reply_text,
@@ -235,6 +243,7 @@ def poss_stand(update: Update, context: CallbackContext):
         return STAND_COL
 
     elif text == no:
+        PointSales.objects.filter(point_name=point_name).update(poss_stand='0')
         reply_text = f'Оцените точку от 1 до 10:'
         update.message.reply_text(
             text=reply_text,
@@ -249,7 +258,7 @@ def photo_stand(update: Update, context: CallbackContext):
 
     img_id = context.bot.get_file(update.message.photo[-1].file_id)
     img_id.download(f'images/{img_id["file_unique_id"]}.jpg')
-    PointSales.objects.filter(point_name=point_name).update(point_photo=img_id["file_unique_id"])
+    PointSales.objects.filter(point_name=point_name).update(point_photo=f'https//zaax.ru/bot/evrowood/{img_id["file_unique_id"]}.jpg')
 
     reply_text = f'Горит ли LED плинтус на стенде EVROWOOD?'
     update.message.reply_text(
@@ -264,15 +273,29 @@ def active_led(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
 
-    PointSales.objects.filter(point_name=point_name).update(active_led=text)
-
-
-    reply_text = f'Есть ли раздаточный материал на торговой точке?'
-    update.message.reply_text(
-        text=reply_text,
-        reply_markup=reply_yes_no,
-    )
-    return HANDOUT
+    if text == yes:
+        PointSales.objects.filter(point_name=point_name).update(active_led='1')
+        reply_text = f'Есть ли раздаточный материал на торговой точке?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return HANDOUT
+    elif text == no:
+        PointSales.objects.filter(point_name=point_name).update(active_led='0')
+        reply_text = f'Есть ли раздаточный материал на торговой точке?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return HANDOUT
+    else:
+        reply_text = f'Некорректное значение. Попробуйте еще раз'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return ACTIVE_LED
 
 
 @log_errors
@@ -280,29 +303,58 @@ def handout(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
 
-    PointSales.objects.filter(point_name=point_name).update(handout=text)
-
-    reply_text = f'Есть ли возможность установки стенда-колонны?'
-    update.message.reply_text(
-        text=reply_text,
-        reply_markup=reply_yes_no,
-    )
-    return STAND_COL
+    if text == yes:
+        PointSales.objects.filter(point_name=point_name).update(handout='1')
+        reply_text = f'Есть ли возможность установки стенда-колонны?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return STAND_COL
+    elif text == no:
+        PointSales.objects.filter(point_name=point_name).update(handout='0')
+        reply_text = f'Есть ли возможность установки стенда-колонны?'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return STAND_COL
+    else:
+        reply_text = f'Некорректное значение. Попробуйте еще раз'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return HANDOUT
 
 
 @log_errors
 def stand_col(update: Update, context: CallbackContext):
     text = update.message.text
     chat_id = update.message.chat_id
-
-    PointSales.objects.filter(point_name=point_name).update(stand_column=text)
-
-    reply_text = f'Оцените точку от 1 до 10:'
-    update.message.reply_text(
-        text=reply_text,
-        reply_markup=reply_marks,
-    )
-    return MARK
+    if text == yes:
+        PointSales.objects.filter(point_name=point_name).update(stand_column='1')
+        reply_text = f'Оцените точку от 1 до 10:'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_marks,
+        )
+        return MARK
+    elif text == no:
+        PointSales.objects.filter(point_name=point_name).update(stand_column='0')
+        reply_text = f'Оцените точку от 1 до 10:'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_marks,
+        )
+        return MARK
+    else:
+        reply_text = f'Некорректное значение. Попробуйте еще раз'
+        update.message.reply_text(
+            text=reply_text,
+            reply_markup=reply_yes_no,
+        )
+        return STAND_COL
 
 
 @log_errors
@@ -318,7 +370,6 @@ def mark(update: Update, context: CallbackContext):
         reply_markup=reply_competitor_start,
     )
     return ADD_COMPETITORS
-
 
 @log_errors
 def add_competitors(update: Update, context: CallbackContext):
@@ -356,7 +407,7 @@ def competitors(update: Update, context: CallbackContext):
         )
         return ADD_COMPETITORS
     else:
-        PointSales.objects.filter(point_name=point_name).update(competitor=str(compretitors_list))
+        PointSales.objects.filter(point_name=point_name).update(competitor=', '.join(compretitors_list))
 
         reply_text = f'Оставьте контакты владельца или менеджера торговой точки. Напишите ФИО:'
         update.message.reply_text(

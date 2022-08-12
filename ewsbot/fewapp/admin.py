@@ -6,6 +6,7 @@ from .models import User
 from .models import Questions
 from .models import UserQuestions
 from .models import PointSales
+from import_export.admin import ExportActionMixin
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
@@ -25,5 +26,5 @@ class UserQuestionsAdmin(admin.ModelAdmin):
     list_display = ('user_id', 'quest_id', 'date_ad', 'date_comletion', 'completed')
 
 @admin.register(PointSales)
-class PointSalesAdmin(admin.ModelAdmin):
+class PointSalesAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('point_id', 'point_name', 'point_address', 'contacts_point_name', 'contacts_point_phone')
