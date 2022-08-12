@@ -27,4 +27,6 @@ class UserQuestionsAdmin(admin.ModelAdmin):
 
 @admin.register(PointSales)
 class PointSalesAdmin(ExportActionMixin, admin.ModelAdmin):
+    readonly_fields = ('create_time',)
     list_display = ('point_id', 'point_name', 'point_address', 'contacts_point_name', 'contacts_point_phone')
+

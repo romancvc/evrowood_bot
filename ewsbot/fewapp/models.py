@@ -80,6 +80,7 @@ class PointSales(models.Model):
     contacts_point_name = models.CharField('Имя контакного лица', null=True, max_length=100)
     contacts_point_phone = models.CharField('Телефон контакного лица', null=True, max_length=12)
     contacts_point_email = models.CharField('Email контакного лица', null=True, max_length=30)
+    create_time = models.DateTimeField('Дата добавления', null=True, auto_now_add=True)
 
     def __str__(self):
         return f'#{self.point_name}'
